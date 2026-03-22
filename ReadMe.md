@@ -1,1 +1,1 @@
-hello
+Repository built to study
