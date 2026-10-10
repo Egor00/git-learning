@@ -2,69 +2,70 @@
 #include <stdlib.h>
 #include <time.h>
 #include <limits.h>
+#include <errno.h>
+#include <stddef.h>
+
+#include "myerrors.h"
 
 #define FIXED_SIZE 20
 
-/*
-    Коды возврата:
-    0 - успех
-    1 - неверные параметры
-    2 - ошибка выделения памяти
-*/
-
-/* Генерация случайного целого числа в диапазоне [a, b] */
-int random_int(int a, int b, int *result)
+static ErrorsDef random_int(int a, int b, int *result)
 {
     long long range;
     double value;
 
-    if (result == NULL || a > b)
-        return 1;
+    if (result == NULL)
+        return INVALID_ARGUMENT;
+
+    if (a > b)
+        return INVALID_INTERVAL;
 
     range = (long long)b - (long long)a + 1;
 
-    /*
-        Используем double, чтобы функция могла работать
-        с достаточно широким диапазоном int.
-    */
     value = (double)rand() / ((double)RAND_MAX + 1.0);
 
-    *result = a + (int)(value * range);
+    /*
+        Вычисляем случайное число в диапазоне [a, b].
+        Используем long long, чтобы избежать переполнения
+        при вычислении промежуточного результата.
+    */
+    *result = (int)((long long)a + (long long)(value * (double)range));
 
-    return 0;
+    return STAT_OK;
 }
 
 /*
     Заполнение массива случайными числами из [a, b].
 */
-int fill_array(int *array, size_t size, int a, int b)
+static ErrorsDef fill_array(int *array, size_t size, int a, int b)
 {
     size_t i;
+    ErrorsDef status;
 
-    if (array == NULL || size == 0 || a > b)
-        return 1;
+    if (array == NULL)
+        return INVALID_ARGUMENT;
+
+    if (size == 0)
+        return INVALID_ARRAY_SIZE;
+
+    if (a > b)
+        return INVALID_INTERVAL;
 
     for (i = 0; i < size; ++i)
     {
-        if (random_int(a, b, &array[i]) != 0)
-            return 1;
+        status = random_int(a, b, &array[i]);
+
+        if (status != STAT_OK)
+            return status;
     }
 
-    return 0;
+    return STAT_OK;
 }
 
 /*
-    Поиск минимального и максимального элементов
-    и обмен их местами за один проход.
-
-    min_value и max_value получают найденные значения.
+    Поиск минимума и максимума и обмен их местами за один проход.
 */
-int find_min_max_and_swap(
-    int *array,
-    size_t size,
-    int *min_value,
-    int *max_value
-)
+static ErrorsDef find_min_max_and_swap( int *array, size_t size, int *min_value, int *max_value)
 {
     size_t i;
     size_t min_index;
@@ -73,21 +74,17 @@ int find_min_max_and_swap(
     int max;
     int temp;
 
-    if (array == NULL || size == 0 ||
-        min_value == NULL || max_value == NULL)
-    {
-        return 1;
-    }
+    if (array == NULL || min_value == NULL || max_value == NULL)
+        return INVALID_ARGUMENT;
+
+    if (size == 0)
+        return INVALID_ARRAY_SIZE;
 
     min = array[0];
     max = array[0];
-
     min_index = 0;
     max_index = 0;
 
-    /*
-        Один проход по массиву.
-    */
     for (i = 1; i < size; ++i)
     {
         if (array[i] < min)
@@ -103,10 +100,6 @@ int find_min_max_and_swap(
         }
     }
 
-    /*
-        Если минимум и максимум находятся
-        на разных позициях, меняем их местами.
-    */
     if (min_index != max_index)
     {
         temp = array[min_index];
@@ -117,51 +110,55 @@ int find_min_max_and_swap(
     *min_value = min;
     *max_value = max;
 
-    return 0;
+    return STAT_OK;
 }
 
 /*
     Печать массива.
 */
-int print_array(const int *array, size_t size)
+static ErrorsDef print_array(const int *array, size_t size)
 {
     size_t i;
 
-    if (array == NULL || size == 0)
-        return 1;
+    if (array == NULL)
+        return INVALID_ARGUMENT;
+
+    if (size == 0)
+        return INVALID_ARRAY_SIZE;
 
     for (i = 0; i < size; ++i)
     {
-        printf("%d", array[i]);
+        if (printf("%d", array[i]) < 0)
+            return WRITEFILE_ERROR;
 
         if (i + 1 < size)
-            printf(" ");
+        {
+            if (printf(" ") < 0)
+                return WRITEFILE_ERROR;
+        }
     }
 
-    printf("\n");
+    if (printf("\n") < 0)
+        return WRITEFILE_ERROR;
 
-    return 0;
+    return STAT_OK;
 }
 
 /*
-    Поиск элемента массива B, ближайшего по значению к value.
-
-    Если несколько элементов имеют одинаковое минимальное
-    расстояние, выбирается первый найденный.
+    Поиск элемента, ближайшего по значению к value.
+    При равных расстояниях выбирается первый найденный.
 */
-int find_nearest(
-    const int *array,
-    size_t size,
-    int value,
-    int *nearest
-)
+static ErrorsDef find_nearest( const int *array, size_t size, int value, int *nearest)
 {
     size_t i;
     long long current_difference;
     long long best_difference;
 
-    if (array == NULL || size == 0 || nearest == NULL)
-        return 1;
+    if (array == NULL || nearest == NULL)
+        return INVALID_ARGUMENT;
+
+    if (size == 0)
+        return INVALID_ARRAY_SIZE;
 
     *nearest = array[0];
 
@@ -180,59 +177,53 @@ int find_nearest(
         }
     }
 
-    return 0;
+    return STAT_OK;
 }
 
 /*
     Формирование массива C:
-
         C[i] = A[i] + ближайший по значению элемент B.
 */
-int create_array_c(
-    const int *a,
-    size_t size_a,
-    const int *b,
-    size_t size_b,
-    int **c
-)
+static ErrorsDef create_array_c( const int *a, size_t size_a, const int *b, size_t size_b, int **c)
 {
     size_t i;
     int nearest;
     long long sum;
     int *result;
+    ErrorsDef status;
 
-    if (a == NULL || b == NULL ||
-        size_a == 0 || size_b == 0 ||
-        c == NULL)
-    {
-        return 1;
-    }
+    if (a == NULL || b == NULL || c == NULL)
+        return INVALID_ARGUMENT;
+
+    if (size_a == 0 || size_b == 0)
+        return INVALID_ARRAY_SIZE;
+
+    *c = NULL;
+
+    if (size_a > (size_t)-1 / sizeof(int))
+        return INVALID_ARRAY_SIZE;
 
     result = (int *)malloc(size_a * sizeof(int));
 
     if (result == NULL)
-        return 2;
+        return MEMORY_ERROR;
 
     for (i = 0; i < size_a; ++i)
     {
-        if (find_nearest(b, size_b, a[i], &nearest) != 0)
+        status = find_nearest(b, size_b, a[i], &nearest);
+
+        if (status != STAT_OK)
         {
             free(result);
-            return 1;
+            return status;
         }
 
         sum = (long long)a[i] + (long long)nearest;
 
-        /*
-            В данном задании значения A и B лежат
-            в [-1000; 1000], поэтому переполнения int
-            здесь не возникает. Проверка оставлена
-            для корректной работы функции вообще.
-        */
         if (sum < INT_MIN || sum > INT_MAX)
         {
             free(result);
-            return 1;
+            return RESULT_OVERFLOW;
         }
 
         result[i] = (int)sum;
@@ -240,258 +231,250 @@ int create_array_c(
 
     *c = result;
 
-    return 0;
+    return STAT_OK;
 }
 
 /*
-    Получение случайного размера массива
-    в диапазоне [10; 10000].
+    Получение случайного размера массива в диапазоне [10; 10000].
 */
-int random_size(size_t *size)
+static ErrorsDef random_size(size_t *size)
 {
     int value;
+    ErrorsDef status;
 
     if (size == NULL)
-        return 1;
+        return INVALID_ARGUMENT;
 
-    if (random_int(10, 10000, &value) != 0)
-        return 1;
+    status = random_int(10, 10000, &value);
+
+    if (status != STAT_OK)
+        return status;
 
     *size = (size_t)value;
 
-    return 0;
+    return STAT_OK;
 }
 
 /*
-    Первая часть N9.
+    Первая часть задания.
 */
-int task_part_one(int a, int b)
+static ErrorsDef task_part_one(int a, int b)
 {
     int array[FIXED_SIZE];
     int min_value;
     int max_value;
+    ErrorsDef status;
 
     printf("=== Часть 1 ===\n");
 
-    if (fill_array(array, FIXED_SIZE, a, b) != 0)
-    {
-        fprintf(stderr, "Ошибка заполнения массива.\n");
-        return 1;
-    }
+    status = fill_array(array, FIXED_SIZE, a, b);
+
+    if (status != STAT_OK)
+        return status;
 
     printf("Исходный массив:\n");
-    print_array(array, FIXED_SIZE);
 
-    if (find_min_max_and_swap(
-            array,
-            FIXED_SIZE,
-            &min_value,
-            &max_value) != 0)
-    {
-        fprintf(stderr, "Ошибка обработки массива.\n");
-        return 1;
-    }
+    status = print_array(array, FIXED_SIZE);
+
+    if (status != STAT_OK)
+        return status;
+
+    status = find_min_max_and_swap(
+        array,
+        FIXED_SIZE,
+        &min_value,
+        &max_value
+    );
+
+    if (status != STAT_OK)
+        return status;
 
     printf("Минимальный элемент: %d\n", min_value);
     printf("Максимальный элемент: %d\n", max_value);
-
     printf("Массив после обмена минимума и максимума:\n");
-    print_array(array, FIXED_SIZE);
 
-    return 0;
+    return print_array(array, FIXED_SIZE);
 }
 
-/*
-    Вторая часть N9.
-*/
-int task_part_two(void)
+
+    //Вторая часть задания.
+
+static ErrorsDef task_part_two(void)
 {
     int *a = NULL;
     int *b = NULL;
     int *c = NULL;
 
-    size_t size_a;
-    size_t size_b;
+    size_t size_a = 0;
+    size_t size_b = 0;
 
-    int result;
+    ErrorsDef status;
 
     printf("\n=== Часть 2 ===\n");
 
-    /*
-        Случайные размеры A и B в [10; 10000].
-    */
-    if (random_size(&size_a) != 0 ||
-        random_size(&size_b) != 0)
-    {
-        fprintf(stderr, "Ошибка генерации размеров массивов.\n");
-        return 1;
-    }
+    status = random_size(&size_a);
+
+    if (status != STAT_OK)
+        goto cleanup;
+
+    status = random_size(&size_b);
+
+    if (status != STAT_OK)
+        goto cleanup;
 
     printf("Размер A: %zu\n", size_a);
     printf("Размер B: %zu\n", size_b);
+
+    if (size_a > (size_t)-1 / sizeof(int) ||
+        size_b > (size_t)-1 / sizeof(int))
+    {
+        status = INVALID_ARRAY_SIZE;
+        goto cleanup;
+    }
 
     a = (int *)malloc(size_a * sizeof(int));
 
     if (a == NULL)
     {
-        fprintf(stderr, "Не удалось выделить память для A.\n");
-        return 2;
+        status = MEMORY_ERROR;
+        goto cleanup;
     }
 
     b = (int *)malloc(size_b * sizeof(int));
 
     if (b == NULL)
     {
-        fprintf(stderr, "Не удалось выделить память для B.\n");
-        free(a);
-        return 2;
+        status = MEMORY_ERROR;
+        goto cleanup;
     }
 
-    /*
-        A и B заполняются числами из [-1000; 1000].
-    */
-    if (fill_array(a, size_a, -1000, 1000) != 0)
-    {
-        fprintf(stderr, "Ошибка заполнения A.\n");
-        free(a);
-        free(b);
-        return 1;
-    }
+    status = fill_array(a, size_a, -1000, 1000);
 
-    if (fill_array(b, size_b, -1000, 1000) != 0)
-    {
-        fprintf(stderr, "Ошибка заполнения B.\n");
-        free(a);
-        free(b);
-        return 1;
-    }
+    if (status != STAT_OK)
+        goto cleanup;
 
-    /*
-        Формируем C.
-        Размер C равен размеру A.
-    */
-    result = create_array_c(
-        a,
-        size_a,
-        b,
-        size_b,
-        &c
-    );
+    status = fill_array(b, size_b, -1000, 1000);
 
-    if (result != 0)
-    {
-        fprintf(stderr, "Ошибка формирования массива C.\n");
-        free(a);
-        free(b);
-        return result;
-    }
+    if (status != STAT_OK)
+        goto cleanup;
 
-    /*
-        Чтобы не выводить до 10000 элементов,
-        показываем первые 20.
-    */
+    status = create_array_c(a, size_a, b, size_b, &c);
+
+    if (status != STAT_OK)
+        goto cleanup;
+
     printf("\nПервые элементы A:\n");
-    print_array(a, size_a < 20 ? size_a : 20);
+
+    status = print_array(a, size_a < 20 ? size_a : 20);
+
+    if (status != STAT_OK)
+        goto cleanup;
 
     printf("Первые элементы B:\n");
-    print_array(b, size_b < 20 ? size_b : 20);
+
+    status = print_array(b, size_b < 20 ? size_b : 20);
+
+    if (status != STAT_OK)
+        goto cleanup;
 
     printf("Первые элементы C:\n");
-    print_array(c, size_a < 20 ? size_a : 20);
 
-    /*
-        Освобождение всей динамической памяти.
-    */
+    status = print_array(c, size_a < 20 ? size_a : 20);
+
+cleanup:
     free(a);
     free(b);
     free(c);
 
-    return 0;
+    return status;
+}
+
+
+    //Разбор целого числа из аргумента командной строки.
+
+static ErrorsDef parse_int_argument(const char *str, int *value)
+{
+    char *end_ptr;
+    long parsed_value;
+
+    if (str == NULL || value == NULL)
+        return INVALID_ARGUMENT;
+
+    if (*str == '\0')
+        return INVALID_INPUT;
+
+    errno = 0;
+    end_ptr = NULL;
+    parsed_value = strtol(str, &end_ptr, 10);
+
+    if (str == end_ptr || *end_ptr != '\0')
+        return INVALID_INPUT;
+
+    if (errno == ERANGE || parsed_value < INT_MIN || parsed_value > INT_MAX)
+        return RESULT_OVERFLOW;
+
+    *value = (int)parsed_value;
+
+    return STAT_OK;
+}
+
+static int report_error(ErrorsDef error)
+{
+    if (error != STAT_OK) {
+        errors(error);
+    }
+
+    return (int)error;
 }
 
 int main(int argc, char *argv[])
 {
-    char *end_ptr;
-    long a_long;
-    long b_long;
     int a;
     int b;
-    int result;
+    ErrorsDef status;
 
     srand((unsigned int)time(NULL));
 
-    /*
-        Для первой части a и b передаются
-        через командную строку:
-
-        program a b
-
-        Например:
-
-        program -100 100
-    */
     if (argc != 3)
     {
-        fprintf(
-            stderr,
-            "Использование: %s <a> <b>\n",
-            argv[0]
-        );
-
-        return 1;
+        fprintf(stderr, "Использование: %s <a> <b>\n", argv[0]);
+        return report_error(INVALID_ARGUMENT);
     }
 
-    /*
-        Чтение a.
-    */
-    end_ptr = NULL;
-    a_long = strtol(argv[1], &end_ptr, 10);
+    status = parse_int_argument(argv[1], &a);
 
-    if (*argv[1] == '\0' ||
-        *end_ptr != '\0' ||
-        a_long < INT_MIN ||
-        a_long > INT_MAX)
+    if (status != STAT_OK)
     {
-        fprintf(stderr, "Некорректное значение a.\n");
-        return 1;
+        
+        return report_error(status);
     }
 
-    /*
-        Чтение b.
-    */
-    end_ptr = NULL;
-    b_long = strtol(argv[2], &end_ptr, 10);
+    status = parse_int_argument(argv[2], &b);
 
-    if (*argv[2] == '\0' ||
-        *end_ptr != '\0' ||
-        b_long < INT_MIN ||
-        b_long > INT_MAX)
+    if (status != STAT_OK)
     {
-        fprintf(stderr, "Некорректное значение b.\n");
-        return 1;
-    }
 
-    a = (int)a_long;
-    b = (int)b_long;
+        return report_error(status);
+    }
 
     if (a > b)
     {
-        fprintf(stderr, "Должно выполняться условие a <= b.\n");
-        return 1;
+
+        return report_error(status);
     }
 
-    /*
-        Часть 1.
-    */
-    result = task_part_one(a, b);
+    status = task_part_one(a, b);
 
-    if (result != 0)
-        return result;
+    if (status != STAT_OK)
+    {
 
-    /*
-        Часть 2.
-    */
-    result = task_part_two();
+        return report_error(status);
+    }
 
-    return result;
+    status = task_part_two();
+
+    if (status != STAT_OK)
+        report_error(status);
+
+    return status;
 }
