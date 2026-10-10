@@ -3,11 +3,12 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <limits.h>
 #include <errno.h>
+#include <limits.h>
 
-#include "mymath.h"
 #include "myerrors.h"
+#include "mymath.h"
+
 
 
 static ErrorsDef h(long x) {
@@ -19,15 +20,14 @@ static ErrorsDef h(long x) {
         if(i%x == 0){
             printf("%d\n", i);
             c = 1;
-            return STAT_OK;
         };
     };
-    if(!c) puts("Нет таких\n");
+    if(!c) puts("Нет таких");
     return STAT_OK;
 }
 
 static ErrorsDef p(long x){
-    if(x <= 1L){
+    if(x <= 1L || x > LONG_MAX){
         return INVALID_INPUT;
     }
     if(x == 2L) {
@@ -39,7 +39,7 @@ static ErrorsDef p(long x){
         return STAT_OK;
     }
 
-    for(long i=3; eps() <= fabs(sqrt(x)+1.0-(double)i) ; i++){
+    for(long i=3; eps() <= fabs(sqrt(x)+1.0-i) ; i++){
         if(i == x) break;
         if(x % i == 0) {
             puts("Composite");
@@ -51,34 +51,32 @@ static ErrorsDef p(long x){
 }
 
 static ErrorsDef s(long x){
-    if(x<0) {
-        return INVALID_INPUT;
+    if (x > LONG_MAX || x < 0) return INVALID_INPUT;
+    char s[32];
+    int err = snprintf(s, sizeof(s), "%lX", x);
+    if(err < 0) return INVALID_INPUT;
+    else if(err >= sizeof(s)) return FUNC_OVERFLOW;
+    for(int i = 0; s[i] != '\0'; i++) {
+        printf("%c ", s[i]);
     }
-    size_t n = 1;
-    while (n*10000 < x) n*=10;
-    while (x != 0) {
-        printf("%lX ", x % n);
-        x /= n;
-        n /= 10000;
-    }
+    puts("");
     return STAT_OK;
-    /*snprintf(out, 50, "%X", x);
-    for(int i = 0; out[i]!='\0'; i++){
-        printf("%c ", out[i]);
-    }
-    puts("");*/
 }
 
 static ErrorsDef e(long x) {
-    if(x>10L || x < 1L){
+
+    if(x>10 || x < 1){
         return INVALID_INPUT;
     }
     puts("Format \"Base: Powers\"");
     long long res;
     for(int j = 1; j<=10; j++){
         printf("%d: ", j);
-        ErrorsDef err = powi(&res, j, 1);
-        if (err!= STAT_OK) return err;
+        ErrorsDef err = powi(&res, j, 1l);
+        if (err!= STAT_OK) {
+            printf("%d", err);
+            return err;
+        }
         printf("%lld", res);
         if(x == 1) {
             puts("");
@@ -96,11 +94,10 @@ static ErrorsDef e(long x) {
 
 static ErrorsDef a(long x) {
     if(x < 1l) return INVALID_INPUT;
-    if(x > LONG_MAX - 1L || (1l+x) > LONG_MAX/(x/2)) return FUNC_OVERFLOW;
+    if(x > LONG_MAX - 1L || (1l+x) > LONG_MAX/x) return FUNC_OVERFLOW;
     printf("%ld\n", (1l+x)*x/2);
     return STAT_OK;
 }
-
 
 unsigned long long int f(long x) {
     if(x < 0) return INVALID_INPUT;
@@ -110,11 +107,13 @@ unsigned long long int f(long x) {
     }
     unsigned long long int prod = 1ull;
     for(long i = 2l; i <= x; i++) {
+        if(prod>ULLONG_MAX/i) return FUNC_OVERFLOW;
         prod*=i;
     }
     printf("%llu\n", prod);
     return STAT_OK;
 }
+
 
 static int report_error(ErrorsDef error)
 {
@@ -126,13 +125,13 @@ static int report_error(ErrorsDef error)
 }
 
 int main(int argc, char *argv[]){
+    if(argc != 3) return report_error(INVALID_ARGUMENT);
     char *st = NULL;
-    char buff[32];
-    snprintf(buff, sizeof(buff),"%ld", LONG_MAX);
-    if (strcmp(argv[1], buff) > 0) return report_error(INPUT_OVERFLOW);
-    long n = strtol(argv[1], &st, 10);
+    errno = 0;
+    long n = strtol(argv[2], &st, 10);
+    if(errno == ERANGE) return report_error(INPUT_OVERFLOW);
     if(*st == '\0'){
-        const char* flag = argv[2];
+        const char* flag = argv[1];
         if(strcmp(flag, "-h") == 0 || strcmp(flag, "/h") == 0){
             return report_error(h(n));
         }

@@ -87,12 +87,7 @@ static ErrorsDef is_convex_polygon(int count, int *result, ...)
 }
 
 
-static ErrorsDef evaluate_polynomial(
-    double x,
-    int degree,
-    double *result,
-    ...
-)
+static ErrorsDef evaluate_polynomial( double x, int degree, double *result, ... )
 {
     va_list args;
     double value;
@@ -159,11 +154,7 @@ static ErrorsDef digit_value(char c, int *value)
    Перевод числа из системы счисления base
    в unsigned long long.
 */
-static ErrorsDef parse_number_base(
-    const char *str,
-    int base,
-    unsigned long long *value
-)
+static ErrorsDef parse_number_base( const char *str, int base, unsigned long long *value )
 {
     size_t i;
     unsigned long long result = 0;
@@ -210,11 +201,7 @@ static ErrorsDef parse_number_base(
 }
 
 /* Проверка числа Капрекара. */
-static ErrorsDef is_kaprekar(
-    unsigned long long number,
-    int base,
-    int *result
-)
+static ErrorsDef is_kaprekar( unsigned long long number, int base, int *result )
 {
     unsigned long long square;
     unsigned long long divisor = 1;
@@ -281,12 +268,7 @@ static ErrorsDef is_kaprekar(
    Среди переданных строк находит числа Капрекара.
    После result_count передаются count аргументов типа const char *.
 */
-static ErrorsDef find_kaprekar_numbers(
-    int base,
-    int count,
-    int *result_count,
-    ...
-)
+static ErrorsDef find_kaprekar_numbers( int base, int count, int *result_count, ... )
 {
     va_list args;
     int i;
@@ -344,11 +326,7 @@ static ErrorsDef find_kaprekar_numbers(
 
 
 
-static ErrorsDef geometric_mean(
-    int count,
-    double *result,
-    ...
-)
+static ErrorsDef geometric_mean( int count, double *result, ... )
 {
     va_list args;
     double logarithm_sum = 0.0;
@@ -396,11 +374,7 @@ static ErrorsDef geometric_mean(
 }
 
 
-static ErrorsDef fast_power(
-    double x,
-    long long n,
-    double *result
-)
+static ErrorsDef fast_power( double x, long long n, double *result )
 {
     double half;
     double value;
@@ -512,13 +486,7 @@ static double equation_3(double x)
 }
 
 /* Поиск корня методом дихотомии. */
-static ErrorsDef bisection(
-    double left,
-    double right,
-    double epsilon,
-    EquationFunction function,
-    double *result
-)
+static ErrorsDef bisection( double left, double right, double epsilon, EquationFunction function, double *result )
 {
     double f_left;
     double f_right;
@@ -616,7 +584,7 @@ int main(void)
 
         status = is_convex_polygon( 4, &convex, 0.0, 0.0, 4.0, 0.0, 4.0, 3.0, 0.0, 3.0);
 
-        if (!report_error(status)) {
+        if (report_error(status)) {
             return report_error(status);
         }
 
@@ -629,7 +597,7 @@ int main(void)
 
         status = evaluate_polynomial( 2.0, 3, &polynomial, 2.0, 3.0, 4.0, 5.0);
 
-        if (!report_error(status)) {
+        if (report_error(status)) {
             return report_error(status);
         }
 
@@ -644,7 +612,7 @@ int main(void)
 
         status = find_kaprekar_numbers( 10, 7, &count, "1", "9", "10", "45", "55", "99", "297" );
 
-        if (!report_error(status)) {
+        if (report_error(status)) {
             return report_error(status);
         }
 
@@ -657,7 +625,7 @@ int main(void)
 
         status = geometric_mean( 4, &result, 1.0, 2.0, 4.0, 8.0 );
 
-        if (!report_error(status)) {
+        if (report_error(status)) {
             return report_error(status);
         }
 
@@ -670,7 +638,7 @@ int main(void)
 
         status = fast_power(2.0, 10, &result);
 
-        if (!report_error(status)) {
+        if (report_error(status)) {
             return report_error(status);
         }
 
@@ -678,7 +646,7 @@ int main(void)
 
         status = fast_power(2.0, -3, &result);
 
-        if (!report_error(status)) {
+        if (report_error(status)) {
             return report_error(status);
         }
 
@@ -693,7 +661,7 @@ int main(void)
 
         status = bisection( 1.0, 2.0, 0.000001, equation_1, &root );
 
-        if (!report_error(status)) {
+        if (report_error(status)) {
             return report_error(status);
         }
 
@@ -701,7 +669,7 @@ int main(void)
 
         status = bisection( 1.0, 2.0, 0.000001, equation_2, &root );
 
-        if (!report_error(status)) {
+        if (report_error(status)) {
             return report_error(status);
         }
 
@@ -709,7 +677,7 @@ int main(void)
 
         status = bisection( 0.0, 1.0, 0.000001, equation_3, &root );
 
-        if (!report_error(status)) {
+        if (report_error(status)) {
             return report_error(status);
         }
 

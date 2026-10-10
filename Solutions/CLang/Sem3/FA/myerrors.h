@@ -1,3 +1,4 @@
+#pragma once
 #include <stdio.h>
 
 typedef enum
@@ -56,6 +57,7 @@ typedef enum
     POWER_OVERFLOW,
     RESULT_OVERFLOW,
 
+    TYPECAST_ERROR,
     UNKNOWN_ERROR
 
 } ErrorsDef;
@@ -66,7 +68,6 @@ void errors(ErrorsDef e)
     {
         case STAT_OK:
             return;
-
         case INVALID_INPUT:
             puts("Error! Invalid input!");
             break;
@@ -84,7 +85,7 @@ void errors(ErrorsDef e)
             break;
 
         case MATCH_ARGS:
-            puts("Error! Arguments do not match the flag!");
+            puts("Error! Amount or type of args given is invalid!");
             break;
 
         case ZERO_DIV:
@@ -207,9 +208,23 @@ void errors(ErrorsDef e)
             puts("Error! Result overflow!");
             break;
 
+        case FACDOUB_OVERFLOW:
+            puts("Error! Double factorial overflow!");
+            break;
+        case TYPECAST_ERROR:
+            puts("Error! Loss of data while changing types");
+            break;
         case UNKNOWN_ERROR:
+            puts("Error! Finished with error!");
+            break;
         default:
             puts("Error! Unknown error!");
             break;
     }
 }
+
+/* isinfinite Infinity - макс значение экспоненты при нулевой мантиссе
+|𝑓(𝑥)|≤𝐶⋅|𝑔(𝑥)|
+Суть из матана: O-большое задаёт верхнюю границу. 
+Запись f(x) = O(g(x)) означает, что функция f(x) растёт не быстрее, чем функция g(x) с точностью до постоянного множителя.
+*/

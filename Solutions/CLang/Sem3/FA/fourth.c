@@ -193,6 +193,7 @@ static ErrorsDef process_i(FILE *input, FILE *output)
                 return RESULT_OVERFLOW;
             }
             count++;
+            
         }
 
         if (c == '\n') 
@@ -210,8 +211,7 @@ static ErrorsDef process_i(FILE *input, FILE *output)
     }
 
     if (count != 0) {
-        if (fprintf(output, "%lu\n",
-                    (unsigned long)count) < 0) {
+        if (fprintf(output, "%lu\n", (unsigned long)count) < 0) {
             return WRITEFILE_ERROR;
         }
     }
@@ -230,8 +230,7 @@ static ErrorsDef process_s(FILE *input, FILE *output)
 
     while ((c = fgetc(input)) != EOF) {
         if (c == '\n') {
-            if (fprintf(output, "%lu\n",
-                        (unsigned long)count) < 0) {
+            if (fprintf(output, "%lu\n", (unsigned long)count) < 0) {
                 return WRITEFILE_ERROR;
             }
 
@@ -258,8 +257,7 @@ static ErrorsDef process_s(FILE *input, FILE *output)
     }
 
     if (count != 0) {
-        if (fprintf(output, "%lu\n",
-                    (unsigned long)count) < 0) {
+        if (fprintf(output, "%lu\n", (unsigned long)count) < 0) {
             return WRITEFILE_ERROR;
         }
     }
@@ -281,8 +279,7 @@ static ErrorsDef process_a(FILE *input, FILE *output)
                 return WRITEFILE_ERROR;
             }
         } else {
-            if (fprintf(output, "%02X",
-                        (unsigned int)(unsigned char)c) < 0) {
+            if (fprintf(output, "%02X", (unsigned int)(unsigned char)c) < 0) {
                 return WRITEFILE_ERROR;
             }
         }
@@ -320,6 +317,7 @@ int main(int argc, char *argv[])
 
     if (argc < 3 || argv == NULL ||
         argv[1] == NULL || argv[2] == NULL) {
+        puts("./fourth.out <флаг>(“-d“, “/d“, “-i“, “/i“, “-s“, “/s“, “-a“,\n “/a“, “-nd”, “/nd”, “-ni”, “/ni”, “-ns”, “/ns”, “-na”,\n“/na”, “-nd”, “/nd”, “-ni”, “/ni”, “-ns”, “/ns”, “-na”, “/na”) <input_file> [output_file]");
         return report_error(MATCH_ARGS);
     }
 
@@ -332,11 +330,13 @@ int main(int argc, char *argv[])
 
     if (has_n(flag)) {
         if (argc != 4 || argv[3] == NULL) {
+            puts("./fourth.out <флаг>(“-d“, “/d“, “-i“, “/i“, “-s“, “/s“, “-a“,\n “/a“, “-nd”, “/nd”, “-ni”, “/ni”, “-ns”, “/ns”, “-na”,\n“/na”, “-nd”, “/nd”, “-ni”, “/ni”, “-ns”, “/ns”, “-na”, “/na”) <input_file> [output_file]");
             return report_error(MATCH_ARGS);
         }
 
         specified_output = argv[3];
     } else if (argc != 3) {
+        puts("./fourth.out <флаг>(“-d“, “/d“, “-i“, “/i“, “-s“, “/s“, “-a“,\n “/a“, “-nd”, “/nd”, “-ni”, “/ni”, “-ns”, “/ns”, “-na”,\n“/na”, “-nd”, “/nd”, “-ni”, “/ni”, “-ns”, “/ns”, “-na”, “/na”) <input_file> [output_file]");
         return report_error(MATCH_ARGS);
     }
 
@@ -350,8 +350,7 @@ int main(int argc, char *argv[])
         return report_error(INVALID_FLAG);
     }
 
-    status = make_output_filename(
-        input_path, flag, specified_output, &output_path);
+    status = make_output_filename(input_path, flag, specified_output, &output_path);
 
     if (status != STAT_OK) {
         return report_error(status);

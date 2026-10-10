@@ -7,7 +7,6 @@
 #include <math.h>
 
 #include "mymath.h"
-#include "myerrors.h"
 
 /*
     Преобразование строки в double.
