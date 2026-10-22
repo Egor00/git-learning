@@ -77,7 +77,7 @@ void summ(char buf[], int32_t len){
 
 int main(int argc, char **argv){
 	
-    if(argc != 2) {
+    if(argc != 1) {
         char msg[] = "error1: failed to open requested file\n";
 		write(STDERR_FILENO, msg, sizeof(msg));
 		exit(EXIT_FAILURE);
@@ -87,18 +87,12 @@ int main(int argc, char **argv){
 
 	pid_t pid = getpid();
 
-	int32_t file = open(argv[1], O_RDONLY | O_CREAT , 0600);
-	if (file == -1) {
-		const char msg[] = "error2: failed to open requested file\n";
-		write(STDERR_FILENO, msg, sizeof(msg));
-		exit(EXIT_FAILURE);
-	}
 	char c;
 	int32_t len = 0;
 	char buf[1024];
 
 
-    while (bytes = read(file, &c, sizeof(char))) {
+    while (bytes = read(STDIN_FILENO, &c, sizeof(char))) {
 		if (bytes < 0) {
 			const char msg[] = "error: failed to read from stdin\n";
 			write(STDERR_FILENO, msg, sizeof(msg));
@@ -126,6 +120,5 @@ int main(int argc, char **argv){
 		write(STDOUT_FILENO, &term, sizeof(term));
 	}
 
-	close(file);
 
 }
