@@ -13,19 +13,51 @@
 void summ(char buf[], int32_t len){
 	char strd[512];
 	double a1 = 0.0;
+<<<<<<< HEAD
 	int32_t ls = 0;
 	for(int32_t i = 0; i< len; i++) {
 		if(buf[i]==' ') {
 			errno = 0;
 			double a2 = strtod(strd, NULL);
 			if(errno == ERANGE) {
+=======
+	int32_t l = 0;
+	for(int32_t i = 0; i< len; i++) {
+		if(buf[i]==' ') {
+			strd[l++] = '\0';
+			char* end;
+			double a2 = strtod(strd, &end);
+			
+			if(*end != '\0') {
+				{
+					char msg[1024];
+
+					int32_t n = snprintf(msg, sizeof(msg), "Error! Found in input: %s\n", end);
+					if(n > sizeof(msg) || n == -1) 
+					{
+						char msg2[] = "Error! Output overflow!\n";
+						write(STDOUT_FILENO, msg2, sizeof(msg2));
+					}
+					return;
+					write(STDOUT_FILENO, msg, n);
+				}
+				return;
+			}
+			if(isinf(a2)) {
+>>>>>>> 468caa3 (labOS1)
 				{
 				char msg[] = "Error! Number is too large!\n";
 				write(STDOUT_FILENO, msg, sizeof(msg));
 				}
 				return;
 			}
+<<<<<<< HEAD
 			if(a1-(DBL_MAX-a2) > 0.00001) {
+=======
+			a1+=a2;
+
+			if(isinf(a1)) {
+>>>>>>> 468caa3 (labOS1)
 				{
 				char msg[] = "Error! Summary overflow!\n";
 				write(STDOUT_FILENO, msg, sizeof(msg));
@@ -33,16 +65,25 @@ void summ(char buf[], int32_t len){
 				
 				return;
 			}
+<<<<<<< HEAD
 			a1+=a2;
 			strd[0] = '\0';
 			ls = 0;
 		}
 		else{
 			strd[ls++] = buf[i];
+=======
+			strd[0] = '\0';
+			l = 0;
+		}
+		else{
+			strd[l++] = buf[i];
+>>>>>>> 468caa3 (labOS1)
 		}
 	}
 
 	char buff[1024];
+<<<<<<< HEAD
 	int32_t l = 0;
 
 	int negative = (a1 < 0.0);
@@ -134,6 +175,19 @@ void summ(char buf[], int32_t len){
 
     buff[l++] = '\n';
     write(STDOUT_FILENO, buff, l);*/
+=======
+	int32_t err = snprintf(buff, sizeof(buff), "%f\n", a1);
+	if(err > sizeof(buff) || err == -1) 
+	{
+		{
+			char msg[] = "Error! Output overflow!\n";
+			write(STDOUT_FILENO, msg, sizeof(msg));
+		}
+		return;
+	}
+
+	write(STDOUT_FILENO, buff, err);
+>>>>>>> 468caa3 (labOS1)
 
 }
 
@@ -179,6 +233,7 @@ int main(int argc, char **argv){
 			buf[len++] = c;
 		}
 		
+<<<<<<< HEAD
 		// NOTE: Transform data
 		
 
@@ -204,6 +259,9 @@ int main(int argc, char **argv){
 				exit(EXIT_FAILURE);
 			}
 		}*/
+=======
+
+>>>>>>> 468caa3 (labOS1)
 	}
 
 	
