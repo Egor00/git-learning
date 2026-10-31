@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+set +e
+
+tests=(
+"./first"
+"./first -l"
+"./first -l abc extra"
+"./first -r abc extra"
+"./first -u abc extra"
+"./first -n abc extra"
+"./first -x abc"
+"./first \"\""
+"./first -l \"\""
+"./first \"\" abc"
+"./first -l a"
+"./first -l abcdef"
+"./first -l \"\""
+"./first -l \" \""
+"./first -l \"     \""
+"./first -l \"1234567890\""
+"./first -l \"!@#$%^&*()\""
+"./first -l \"abcdefghijklmnopqrstuvwxyz\""
+"./first -r a"
+"./first -r abc"
+"./first -r \"\""
+"./first -r \" \""
+"./first -r \"123456789\""
+"./first -r \"!@#$%^\""
+"./first -r \"abcdef123456\""
+"./first -r \"a b c d\""
+"./first -r \"aaaaaaaaaaaaaaaa\""
+"./first -u abcdef"
+"./first -u a"
+"./first -u \"\""
+"./first -u \"abcdefghi\""
+"./first -u \"123456789\""
+"./first -u \"a1b2c3d4\""
+"./first -u \"!abcdef\""
+"./first -u \"hello world\""
+"./first -u \"aaaaaaaaaa\""
+"./first -n abc123"
+"./first -n 123abc"
+"./first -n \"\""
+"./first -n \"123456789\""
+"./first -n \"abcdef\""
+"./first -n \"!@#$%^\""
+"./first -n \"a1!b2@c3#\""
+"./first -n \"123abc!@#\""
+"./first -n \"!!!111aaa\""
+"./first -n \"AaBbCc123\""
+"./first -c abc 123"
+"./first -c abc 0"
+"./first -c abc 123 def"
+"./first -c hello 42 world test"
+"./first -c a 1 b c d e"
+"./first -c \"\" 123 abc"
+"./first -c abc 999999999999999999999999"
+"./first -c abc -1"
+"./first -c abc 12x"
+"./first -c abc \"\""
+"./first -c a 0 b"
+"./first -c a 0 b c"
+"./first -c a 0 b c d e f g h"
+"./first -c a 1 \"\""
+"./first -c \"\" 0 \"\" "
+)
+
+for cmd in "${tests[@]}"; do
+    echo "================================"
+    echo "TEST: $cmd"
+
+    timeout 3s bash -c "$cmd" \
+        >test_stdout.txt 2>test_stderr.txt
+
+    rc=$?
+
+    echo "EXIT CODE: $rc"
+    echo "STDOUT:"
+    cat test_stdout.txt
+    echo "STDERR:"
+    cat test_stderr.txt
+done
+
+rm -f test_stdout.txt test_stderr.txt
