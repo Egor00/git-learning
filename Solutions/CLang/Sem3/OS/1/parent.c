@@ -1,4 +1,4 @@
-//parent.c [0] - запись, х1ъ - чтение
+//parent.c [0] - запись, [1] - чтение
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
