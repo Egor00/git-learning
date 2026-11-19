@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 
     char client_path[1024];
 
-    int n = snprintf(client_path, sizeof(client_path), "%s/client", executable_path);
+    int n = snprintf(client_path, sizeof(client_path), "%s/child", executable_path);
 
     if (n < 0 || (size_t)n >= sizeof(client_path)) {
         fprintf(stderr, "error: client path is too long\n");

@@ -34,10 +34,11 @@ static void summ(const char *buf, uint32_t len)
     double sum = 0.0;
 
     uint32_t current_length = 0;
+    uint32_t c = 0;
 
     for (uint32_t i = 0; i < len; i++) {
 
-        if (buf[i] == ' ' || buf[i] == '\t' ||  buf[i] == '\n' || buf[i] == '\r') {
+        if (buf[i] == ' ' || buf[i] == '\t' ||  buf[i] == '\n' || buf[i] == '\r' || buf[i] == '\0') {
 
             if (current_length == 0)
                 continue;
@@ -78,6 +79,7 @@ static void summ(const char *buf, uint32_t len)
 
                 return;
             }
+            c++;
 
             sum += value;
 
@@ -89,18 +91,38 @@ static void summ(const char *buf, uint32_t len)
 
                 return;
             }
+            
+            if(buf[i] == '\n' || buf[i] == '\0'){
+                if(c != 3) {
+                    const char msg[] = "Error! Wrong arg count in input!\n";
+                    write( STDOUT_FILENO,  msg, sizeof(msg) - 1 );
+                    return;
+                } 
+                c = 0;
+                char result[1024];
+
+                int n = snprintf(result, sizeof(result), "%f\n", sum);
+                sum = 0.0;
+
+                if (n < 0 || (size_t)n >= sizeof(result)) {
+                    const char msg[] = "Error! Output overflow!\n";
+                    write( STDOUT_FILENO,  msg, sizeof(msg) - 1 );
+                    return;
+                }
+
+                if (write( STDOUT_FILENO, result, (size_t)n ) == -1) {
+                    perror("error: failed to write result");
+                }
+                if(buf[i] == '\0') return;
+            }
 
             current_length = 0;
+            strd[current_length] = '\0';
         }
         else {
-
-
             if (current_length >= sizeof(strd) - 1) {
-
                 const char msg[] = "Error! Number is too long!\n";
-
                 write(STDOUT_FILENO, msg, sizeof(msg) - 1);
-
                 return;
             }
 
@@ -110,107 +132,19 @@ static void summ(const char *buf, uint32_t len)
 
     if (current_length > 0) {
 
-        strd[current_length] = '\0';
+        char result[1024];
 
-        char *end = NULL;
+        int n = snprintf(result, sizeof(result), "%f\n", sum);
 
-        errno = 0;
-
-        double value = strtod(strd, &end );
-
-        if (end == strd || *end != '\0') {
-
-            char msg[1024];
-
-            int n = snprintf(
-                msg,
-                sizeof(msg),
-                "Error! Found in input: %s\n",
-                strd
-            );
-
-            if (n < 0 || (size_t)n >= sizeof(msg)) {
-                const char error_message[] =
-                    "Error! Output overflow!\n";
-
-                write(
-                    STDOUT_FILENO,
-                    error_message,
-                    sizeof(error_message) - 1
-                );
-
-                return;
-            }
-
-            write(
-                STDOUT_FILENO,
-                msg,
-                (size_t)n
-            );
-
+        if (n < 0 || (size_t)n >= sizeof(result)) {
+            const char msg[] = "Error! Output overflow!\n";
+            write( STDOUT_FILENO,  msg, sizeof(msg) - 1 );
             return;
         }
 
-        if (errno == ERANGE || isinf(value)) {
-
-            const char msg[] =
-                "Error! Number is too large!\n";
-
-            write(
-                STDOUT_FILENO,
-                msg,
-                sizeof(msg) - 1
-            );
-
-            return;
+        if (write( STDOUT_FILENO, result, (size_t)n ) == -1) {
+            perror("error: failed to write result");
         }
-
-        sum += value;
-
-        if (isinf(sum)) {
-
-            const char msg[] =
-                "Error! Summary overflow!\n";
-
-            write(
-                STDOUT_FILENO,
-                msg,
-                sizeof(msg) - 1
-            );
-
-            return;
-        }
-    }
-
-    char result[1024];
-
-    int n = snprintf(
-        result,
-        sizeof(result),
-        "%f\n",
-        sum
-    );
-
-    if (n < 0 || (size_t)n >= sizeof(result)) {
-
-        const char msg[] =
-            "Error! Output overflow!\n";
-
-        write(
-            STDOUT_FILENO,
-            msg,
-            sizeof(msg) - 1
-        );
-
-        return;
-    }
-
-    if (write(
-            STDOUT_FILENO,
-            result,
-            (size_t)n
-        ) == -1) {
-        perror("error: failed to write result");
     }
 }
 
