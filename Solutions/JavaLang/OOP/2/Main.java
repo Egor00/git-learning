@@ -1,28 +1,13 @@
 public class Main {
     public static void main(String[] args) {
 
-        PersonBuilder builder = new PersonBuilder();
+        HumanBuilder builder = new HumanBuilder();
+        builder.setFirstname("Pepik").setLastname("Popski").setAge(10).setOccupation("Digger");
 
-        PersonDirector director = new PersonDirector(builder);
+        Human person = builder.build();
 
-        Person person1 = director.createProgrammer("Иван", "Иванов", 25);
-
-        person1.introduce();
-        person1.work();
-        person1.move();
-
-        System.out.println();
-
-        Person person2 = new PersonBuilder()
-                .setFirstName("Анна")
-                .setLastName("Петрова")
-                .setAge(30)
-                .setProfession("Врач")
-                .setAddress("Санкт-Петербург")
-                .build();
-
-        person2.introduce();
-        person2.work();
-        person2.move();
+        person.introduce();
+        person.leaveWork();
+        person.aged();
     }
 }
